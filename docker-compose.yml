@@ -14,7 +14,6 @@ services:
       - home-network
       - global-database-network
     depends_on:
-      - home-service
       - user-service
 
   user-service:
@@ -66,7 +65,6 @@ networks:
 #       - home-network
 #       - global-database-network
 #     depends_on:
-#       - home-service
 #       - user-service
 
 #   user-service:

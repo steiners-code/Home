@@ -44,7 +44,9 @@ async function refreshWithLock(refreshToken: string, forwardedIp: string | null,
     const existing = refreshLocks.get(refreshToken);
     if (existing) return existing;
 
-    const promise = fetch(`${process.env.SERVER_URL}/api/v1/auth/refresh`, {
+    const url = new URL("/api/v1/auth/refresh", process.env.SERVER_URL).toString();
+    console.log(url);
+    const promise = fetch(url, {
         method: "POST",
         headers: {
             "Cookie": `refreshToken=${refreshToken}`,
@@ -54,7 +56,7 @@ async function refreshWithLock(refreshToken: string, forwardedIp: string | null,
             "Content-Type": "application/json"
         }
     })
-        .then(res => res.json())
+        .then(async res => res.json())
         .finally(() => refreshLocks.delete(refreshToken))
         .catch((error) => console.error(error));
 

@@ -12,7 +12,6 @@ import { signup } from "@/actions/auth/sign-up";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
@@ -57,7 +56,7 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                 email: result.data?.email ?? ""
             });
 
-            router.push(`/verification?${params.toString()}`);
+            router.push(`/auth/verification?${params.toString()}`);
         },
 
         onError: (error: Error) => {

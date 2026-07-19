@@ -12,6 +12,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         const data: TypeUserData = body as TypeUserData;
 
         const res = await signUpUser(data)
+        console.log(res);
 
         return status(res.status, { message: res.message, data: res.data, field: res.field });
     })
@@ -24,16 +25,19 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         return status(res.status, { message: res.message, data: res.data, field: res.field });
     })
 
-    .post('/verify-account', async ({ status, jwt, body, cookie: { auth } }) => {
+    .post('/verify-account', async ({ status, jwt, body, headers }) => {
         const { userId, otp } = body as { userId: string, otp: string }
         if (!userId || !otp) return status(415, "Invalid or Missing Inputs!");
 
-        const res = await verifyOTP(userId, otp);
-        if (!res?.data) return status(res.status, res.message);
+        const ipAddress = headers['x-forwarded-for'] || null;
+        const userAgent = headers['user-agent'] || null;
 
-        const token = await jwt.sign(res?.data)
+        const { data, refreshToken, ...res } = await verifyOTP(userId, otp, ipAddress, userAgent);
+        if (!data || !refreshToken) return status(res.status, res.message);
 
-        return status(res.status, res.message)
+        const token = await jwt.sign(data)
+
+        return status(res.status, { message: res.message, auth: token, refreshToken })
     })
 
     .post('/resend-otp', async ({ status, body }) => {

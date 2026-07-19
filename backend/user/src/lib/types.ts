@@ -5,7 +5,6 @@ export type TypeUserData = {
     lastName: string,
     email: string,
     password: string,
-    username: string
 
     gender?: Gender,
     age?: number,

@@ -1,5 +1,8 @@
+"use server";
+
 // -------------------------------- VERIFY EMAIL -----------------------------------
 
+import { cookies } from "next/headers";
 import { api } from "@/lib/api";
 import axios from "axios";
 
@@ -17,7 +20,29 @@ export async function verifyEmail({
     otp: string;
 }): Promise<OtpActionResult> {
     try {
+        const cookieStore = await cookies();
+
         const res = await api.post("/auth/verify-account", { userId, otp });
+
+        cookieStore.set({
+            name: "auth",
+            value: res.data.auth,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60,
+            path: "/",
+        });
+
+        cookieStore.set({
+            name: "refreshToken",
+            value: res.data.refreshToken,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 30 * 24 * 60 * 60,
+            path: "/",
+        });
 
         return {
             success: true,

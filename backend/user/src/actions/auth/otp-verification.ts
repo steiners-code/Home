@@ -1,4 +1,5 @@
 import { sendOTPVerificationEmail } from "../../lib/mailer";
+import { getRefreshToken } from "./authorize-user";
 import { getUserById } from "../user/users";
 import { prisma } from "../../lib/db";
 import { isFuture } from "date-fns";
@@ -31,7 +32,20 @@ import bcrypt from 'bcrypt';
  * - If match fails, an error status and message is returned
  */
 
-export async function verifyOTP(userId: string, otp: string) {
+type VerifyOTPReturnType = {
+    status: number,
+    message: string,
+    data?: {
+        userId: string,
+        firstName: string,
+        lastName?: string,
+        email: string,
+        auth_time: Date,
+    },
+    refreshToken?: string
+}
+
+export async function verifyOTP(userId: string, otp: string, ipAddress: string | null, userAgent: string | null): Promise<VerifyOTPReturnType> {
     try {
         const UserOTPRecord = await prisma.userOTPVerification.findFirst({
             where: { userId },
@@ -57,6 +71,13 @@ export async function verifyOTP(userId: string, otp: string) {
         });
         await prisma.userOTPVerification.deleteMany({ where: { userId } })
 
+        const session = await prisma.session.create({
+            data: { userId, ipAddress, userAgent },
+            select: { id: true }
+        });
+        const { refreshToken, success, code, ...tokenRes } = await getRefreshToken(session.id);
+        if (!success || !refreshToken) return tokenRes
+
         return {
             status: 200,
             message: "User account has been verified!",
@@ -64,10 +85,10 @@ export async function verifyOTP(userId: string, otp: string) {
                 userId: user.id,
                 firstName: user?.firstName,
                 lastName: user?.lastName ?? undefined,
-                username: user.username,
                 email: user.email,
                 auth_time: new Date(),
-            }
+            },
+            refreshToken,
         }
     } catch (error) {
         console.error(error)

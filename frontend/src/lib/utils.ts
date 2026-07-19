@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-const HOME_URL = process.env.NEXT_PUBLIC_HOME_URL!;
+const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL!;
 const REDIRECT_URL = process.env.NEXT_PUBLIC_DEFAULT_REDIRECT_URL!;
 
 export function cn(...inputs: ClassValue[]) {
@@ -19,7 +19,7 @@ export function getRedirectUrl(searchParams: URLSearchParams): string {
 }
 
 export function getLoginUrl(pathname: string): string {
-  const loginUrl = new URL("/auth/connect?app=the-port-mafia", HOME_URL);
+  const loginUrl = new URL("/auth/signin", FRONTEND_URL);
   loginUrl.searchParams.set("redirectTo", pathname);
 
   return loginUrl.toString();

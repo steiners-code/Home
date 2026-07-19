@@ -1,6 +1,6 @@
-import { getUserByEmail, getUserByUsername } from '../user/users';
 import { sendOTPVerificationEmail } from "../../lib/mailer";
 import type { TypeUserData } from '../../lib/types';
+import { getUserByEmail } from '../user/users';
 import { prisma } from "../../lib/db";
 import bcrypt from 'bcrypt';
 
@@ -15,30 +15,30 @@ import bcrypt from 'bcrypt';
 // freeTiereId stored in memory of the server so reduce db queries
 let cachedFreeTierId: string | null = null;
 
-export async function getORcreateFreeTier() {
-    if (cachedFreeTierId) return cachedFreeTierId;
+// export async function getORcreateFreeTier() {
+//     if (cachedFreeTierId) return cachedFreeTierId;
 
-    const tier = await prisma.subscriptionTier.upsert({
-        where: { slug: 'free-tier' },
-        update: {},
-        create: {
-            price: 0,
-            slug: 'free-tier',
-            base_store_limit: 1,
-            base_product_limit: 50,
-            base_ai_daily_limit: 100,
-            base_team_member_limit: 0,
-            features: {
-                templates: ["simple-store"],
-                store_types: ["e-commerce"]
-            },
-        },
-        select: { id: true },
-    });
+//     const tier = await prisma.subscriptionTier.upsert({
+//         where: { slug: 'free-tier' },
+//         update: {},
+//         create: {
+//             price: 0,
+//             slug: 'free-tier',
+//             base_store_limit: 1,
+//             base_product_limit: 50,
+//             base_ai_daily_limit: 100,
+//             base_team_member_limit: 0,
+//             features: {
+//                 templates: ["simple-store"],
+//                 store_types: ["e-commerce"]
+//             },
+//         },
+//         select: { id: true },
+//     });
 
-    cachedFreeTierId = tier.id;
-    return tier.id;
-}
+//     cachedFreeTierId = tier.id;
+//     return tier.id;
+// }
 
 /**
  * @signUpUser function, user data is processed for creating user account in db
@@ -74,7 +74,7 @@ export async function getORcreateFreeTier() {
  * - A verification email is sent to user's email address
 */
 
-export async function signUpUser({ firstName, lastName, username, email, password, privacyPolicy, newsletter }: TypeUserData) {
+export async function signUpUser({ firstName, lastName, email, password, privacyPolicy, newsletter }: TypeUserData) {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
 
@@ -91,9 +91,6 @@ export async function signUpUser({ firstName, lastName, username, email, passwor
         else if (trimmedLastName.length !== 0 && !/^[a-zA-Z\s\-]+$/.test(trimmedLastName)) {
             return { status: 400, message: "Name should contain only letters, spaces, or hyphens", field: "lastName" };
         }
-        else if (!/^[a-z0-9A-Z_]{3,16}$/.test(username)) {
-            return { status: 400, message: "Username contains invalid characters", field: "username" }
-        }
         else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
             return { status: 400, message: "Email should be of type email@example.com", field: "email" }
         }
@@ -101,15 +98,12 @@ export async function signUpUser({ firstName, lastName, username, email, passwor
             return { status: 400, message: "Password should be of more than 8 characters", field: "password" }
         }
 
-        const usernameExists = await getUserByUsername(username)
-        if (usernameExists) return { status: 400, message: `Username '${username}' is not available`, field: "username" }
-
         const emailExists = await getUserByEmail(email)
         if (emailExists) return { status: 400, message: "Account already exists! Try to Log-in", field: "email" }
 
         const password_hash = await bcrypt.hash(password, 10);
 
-        const tierId = await getORcreateFreeTier();
+        // const tierId = await getORcreateFreeTier();
 
         try {
             const user = await prisma.user.create({
@@ -118,9 +112,8 @@ export async function signUpUser({ firstName, lastName, username, email, passwor
                     lastName: trimmedLastName,
                     email,
                     password_hash,
-                    username,
                     newsletter,
-                    tierId: tierId
+                    // tierId: tierId
                 },
             });
 

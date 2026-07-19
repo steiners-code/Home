@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { login } from "@/actions/auth/log-in";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Image from "next/image";
 
 const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
     const router = useRouter();
@@ -64,8 +63,7 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
             {/* ── Header ── */}
             <CardHeader className="flex flex-col items-center gap-1 pb-4">
                 <CardTitle className="flex flex-row items-center gap-3">
-                    <Image src="/favicon.ico" alt="Vendly Logo" width={32} height={32} />
-                    <span className="text-2xl font-bold tracking-tight">Vendly</span>
+                    <span className="text-2xl font-bold tracking-tight">Home</span>
                 </CardTitle>
                 <CardDescription className="text-center">
                     Log in to your account to continue

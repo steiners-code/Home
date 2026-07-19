@@ -71,7 +71,7 @@ const app = new Elysia()
     // Public Routes - '/auth' routes are made public for authorization/authentication
     .all('/auth/*', async ({ params, request, proxyTo }) => {
       console.log(`API_GATEWAY: Redirecting user to: /auth/${params['*']}`);
-      return proxyTo('main', `/auth/${params['*']}`, request);
+      return proxyTo('user', `/auth/${params['*']}`, request);
     })
 
     // Protected Routes - all the routes targeting a specifc service are protected by-default

@@ -11,7 +11,7 @@ const SERVER_URL = process.env.SERVER_URL;
  * WARNING: This must ONLY be used in Next.js Server environments.
  */
 export const api = axios.create({
-    baseURL: SERVER_URL + "/api/v1",
+    baseURL: new URL("/api/v1", SERVER_URL).toString(),
 });
 
 /**

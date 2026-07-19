@@ -1,7 +1,7 @@
 import 'dotenv';
 import nodemailer from 'nodemailer';
-import { prisma } from './prisma';
 import { add } from 'date-fns';
+import { prisma } from './db';
 import bcrypt from 'bcrypt';
 
 /**

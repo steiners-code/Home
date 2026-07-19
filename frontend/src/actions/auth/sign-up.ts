@@ -1,3 +1,5 @@
+"use server";
+
 import { typeSignUpSchema } from "@/lib/schema/auth";
 import { deleteJWT } from "@/lib/auth";
 import { api } from "@/lib/api";
@@ -40,6 +42,15 @@ export async function signup(
             privacyPolicy: data.privacyPolicy,
             newsletter: data.newsletterOptIn,
         });
+
+        if (res.status !== 200) {
+            return {
+                success: false,
+                message: res.data?.message,
+                field: res.data?.field
+            }
+        }
+
         const { message, data: responseData } = res.data;
 
         return {
@@ -49,7 +60,6 @@ export async function signup(
         };
 
     } catch (error) {
-        console.log(error)
         if (axios.isAxiosError(error)) {
             return {
                 success: false,

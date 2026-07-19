@@ -7,17 +7,24 @@ import { addDays } from "date-fns";
 export async function getUserPayload(userId: string, auth_time?: Date) {
     try {
         const userData = await prisma.user.findUnique({
-            where: { userId },
+            where: { id: userId },
             select: {
-                userId: true,
+                id: true,
                 email: true,
                 firstName: true,
                 lastName: true,
             }
-        })
+        });
+
+        if (!userData)
+            return {
+                status: 400,
+                success: false,
+                message: "User does not exist."
+            }
 
         const payload = {
-            userId: String(userData.userId),
+            userId: String(userData.id),
             firstName: String(userData.firstName),
             lastName: userData.lastName ? String(userData.lastName) : undefined,
             email: String(userData.email),
