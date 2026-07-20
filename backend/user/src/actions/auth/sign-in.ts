@@ -2,6 +2,8 @@ import { sendOTPVerificationEmail } from "../../lib/mailer";
 import { TypeSignInData } from "../../lib/types";
 import { prisma } from "../../lib/db";
 import bcrypt from "bcrypt";
+import { assessLoginRisk } from "./device-trust";
+import { getRefreshToken } from "./authorize-user";
 
 /**
  * @signInUser function validates user credentails and returns a signed JWT
@@ -28,13 +30,38 @@ import bcrypt from "bcrypt";
  * - An email verification code is sent for double security
  */
 
-export async function signInUser({ email, password }: TypeSignInData) {
+type SignInUserReturnType = {
+    success: boolean,
+    status: number,
+    message: string,
+    details?: string,
+    code: "VERIFY" | "TRUSTED" | "ERROR",
+    field?: "email" | "password",
+    payload?: {
+        userId: string,
+        email: string,
+        firstName: string,
+        lastName?: string,
+        auth_time: Date,
+    },
+    refreshToken?: string,
+    otpPayload?: {
+        userId: string,
+        email: string,
+        jti: string,
+        purpose: string,
+    }
+}
+
+export async function signInUser(email: string, password: string, deviceId: string | null, ipAddress: string | null, userAgent: string | null): Promise<SignInUserReturnType> {
     try {
+        let code: SignInUserReturnType["code"] = "VERIFY";
+
         if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-            return { status: 400, message: "Email should be of type email@example.com", field: "email" }
+            return { success: false, status: 400, message: "Email should be of type email@example.com", field: "email", code: "ERROR" }
         }
         else if (password.length < 8) {
-            return { status: 400, message: "Password should be of more than 8 characters", field: "password" }
+            return { success: false, status: 400, message: "Password should be of more than 8 characters", field: "password", code: "ERROR" }
         }
 
         const user = await prisma.user.findUnique({
@@ -49,23 +76,52 @@ export async function signInUser({ email, password }: TypeSignInData) {
                 password_hash: true,
             },
         });
-        if (!user) return { status: 400, message: "Account don't exists! Try to Sign-up", field: "email" }
+        if (!user) return { success: false, status: 400, message: "Account don't exists! Try to Sign-up", field: "email", code: "ERROR" }
 
         const verified = bcrypt.compare(password, user?.password_hash)
-        if (!verified) return { status: 401, message: "Invalid email or password", field: "password" }
+        if (!verified) return { success: false, status: 401, message: "Invalid email or password", field: "password", code: "ERROR" }
 
-        await sendOTPVerificationEmail(user?.id, email)
+        if (deviceId) code = await assessLoginRisk(user.id, deviceId);
+        if (code !== "TRUSTED") {
+            const { success, data, ...res } = await sendOTPVerificationEmail(user?.id, email)
+            if (!success || !data) return { success: false, code: "ERROR", ...res }
 
-        return {
-            status: 200,
-            message: "A verification code has been sent to your email!",
-            data: {
-                userId: user.id,
-                email: user.email,
+            return {
+                success: true,
+                status: 200,
+                message: "A verification code has been sent to your email!",
+                code,
+                otpPayload: {
+                    userId: data.userId,
+                    email: data.email,
+                    jti: data.otpId,
+                    purpose: 'email_verification'
+                },
             }
         }
+
+        const session = await prisma.session.create({
+            data: { userId: user.id, ipAddress, userAgent },
+            select: { id: true, createdAt: true }
+        });
+        const { refreshToken, success, ...tokenRes } = await getRefreshToken(session.id);
+        if (!success || !refreshToken) return { success: false, code: "ERROR", ...tokenRes };
+
+        return {
+            success: true,
+            status: 200,
+            code: "TRUSTED",
+            message: "A verification code has been sent to your email!",
+            payload: {
+                userId: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user?.lastName ?? undefined,
+                auth_time: session.createdAt,
+            },
+            refreshToken,
+        }
     } catch (error) {
-        console.error(error);
-        return { status: 500, message: "Internal Server Error!" };
+        return { success: false, status: 500, message: "Internal Server Error!", code: "ERROR" };
     }
 }

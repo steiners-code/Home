@@ -80,26 +80,26 @@ export async function signUpUser({ firstName, lastName, email, password, privacy
 
     try {
         if (!privacyPolicy) {
-            return { status: 400, message: "You must agree to terms & conditions", field: "privacyPolicy" }
+            return { success: false, status: 400, message: "You must agree to terms & conditions", field: "privacyPolicy" }
         }
         if (trimmedFirstName.length === 0) {
-            return { status: 400, message: "First name is required", field: "firstName" };
+            return { success: false, status: 400, message: "First name is required", field: "firstName" };
         }
         else if (!/^[a-zA-Z\s\-]+$/.test(trimmedFirstName)) {
-            return { status: 400, message: "Name should contain only letters, spaces, or hyphens", field: "firstName" };
+            return { success: false, status: 400, message: "Name should contain only letters, spaces, or hyphens", field: "firstName" };
         }
         else if (trimmedLastName.length !== 0 && !/^[a-zA-Z\s\-]+$/.test(trimmedLastName)) {
-            return { status: 400, message: "Name should contain only letters, spaces, or hyphens", field: "lastName" };
+            return { success: false, status: 400, message: "Name should contain only letters, spaces, or hyphens", field: "lastName" };
         }
         else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-            return { status: 400, message: "Email should be of type email@example.com", field: "email" }
+            return { success: false, status: 400, message: "Email should be of type email@example.com", field: "email" }
         }
         else if (password.length < 8) {
-            return { status: 400, message: "Password should be of more than 8 characters", field: "password" }
+            return { success: false, status: 400, message: "Password should be of more than 8 characters", field: "password" }
         }
 
         const emailExists = await getUserByEmail(email)
-        if (emailExists) return { status: 400, message: "Account already exists! Try to Log-in", field: "email" }
+        if (emailExists) return { success: false, status: 400, message: "Account already exists! Try to Log-in", field: "email" }
 
         const password_hash = await bcrypt.hash(password, 10);
 
@@ -117,22 +117,25 @@ export async function signUpUser({ firstName, lastName, email, password, privacy
                 },
             });
 
-            await sendOTPVerificationEmail(user.id, email)
+            const { success, data, ...otpRes } = await sendOTPVerificationEmail(user.id, email)
+            if (!success || !data) return { success: false, ...otpRes };
 
             return {
+                success: true,
                 status: 200,
                 message: "Account created successfully!",
                 data: {
-                    userId: user.id,
-                    email: user.email,
+                    userId: data.userId,
+                    email: data.email,
+                    purpose: 'email_verification',
+                    jti: data.otpId
                 }
             }
         } catch (e) {
-            return { status: 400, message: "Something went wrong!", field: "email" }
+            return { success: false, status: 400, message: "Something went wrong!", field: "email" }
         }
 
     } catch (error) {
-        console.error(error)
-        return { status: 500, message: "Internal Server Error!" };
+        return { success: false, status: 500, message: "Internal Server Error!" };
     }
 }

@@ -57,42 +57,42 @@ transporter.verify((error, success) => {
 export async function sendOTPVerificationEmail(userId: string, email: string) {
     try {
         const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
-        console.log(otp) // TODO: JUST FOR DEVELOPEMNT
         const mailOptions = {
             from: process.env.AUTH_EMAIL,
             to: email,
-            subject: "Account Verification – Vendly",
-            html: `<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333;">
-                <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #eeeeee;">
+            subject: "[HQ] Network Access Clearance",
+            html: `<div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0a0a0a; padding: 40px 20px; color: #e0e0e0;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #141414; border-radius: 8px; overflow: hidden; border: 1px solid #2a2a2a;">
                     <tr>
-                        <td style="padding: 30px 20px; text-align: center; background-color: #ffffff;">
-                            <span style="font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #000000;">VENDLY</span>
+                        <td style="padding: 40px 20px 20px; text-align: center; border-bottom: 1px solid #2a2a2a;">
+                            <span style="font-size: 20px; font-weight: 700; letter-spacing: 6px; color: #ffffff;">HEADQUARTERS</span><br>
+                            <span style="font-size: 10px; font-weight: 500; letter-spacing: 2px; color: #666666; text-transform: uppercase;">Internal Systems</span>
                         </td>
                     </tr>
-
+                
                     <tr>
-                        <td style="padding: 20px 40px; text-align: center;">
-                            <h2 style="margin-top: 0; color: #111; font-size: 20px;">Verify your email</h2>
-                            <p style="font-size: 15px; line-height: 1.5; color: #666;">
-                                Enter the following code to finish setting up your Vendly account. This code will expire in 1 hour.
+                        <td style="padding: 40px;">
+                            <h2 style="margin-top: 0; color: #ffffff; font-size: 18px; font-weight: 500; letter-spacing: 1px;">Access Clearance Required</h2>
+                            <p style="font-size: 14px; line-height: 1.6; color: #a0a0a0;">
+                                A request to access the central hub has been initiated. To proceed with authentication, please use the clearance code provided below. This authorization token will expire in 10 minutes.
                             </p>
-
-                            <div style="margin: 30px 0; padding: 15px; background-color: #f3f3f3; border-radius: 8px; border: 1px dashed #cccccc;">
-                                <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #007bff;">
+                
+                            <div style="margin: 35px 0; padding: 20px; background-color: #050505; border-radius: 4px; border: 1px solid #333333; text-align: center;">
+                                <span style="font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; font-size: 32px; font-weight: bold; letter-spacing: 12px; color: #e53935;">
                                     ${otp}
                                 </span>
                             </div>
-
-                            <p style="font-size: 13px; color: #999;">
-                                If you didn't request this code, you can safely ignore this email.
+                
+                            <p style="font-size: 12px; color: #666666; line-height: 1.5;">
+                                If you did not initiate this access request, no further action is required. The network remains secure.
                             </p>
                         </td>
                     </tr>
-
+                
                     <tr>
-                        <td style="padding: 30px; text-align: center; font-size: 12px; color: #bbbbbb; border-top: 1px solid #f0f0f0;">
-                            Sent by Vendly Marketplace <br>
-                            vendly.pk
+                        <td style="padding: 25px; text-align: center; font-size: 11px; color: #444444; background-color: #0f0f0f; border-top: 1px solid #2a2a2a;">
+                            Automated Dispatch <br>
+                            <strong>HQ Central Hub</strong>
                         </td>
                     </tr>
                 </table>
@@ -100,9 +100,9 @@ export async function sendOTPVerificationEmail(userId: string, email: string) {
         };
 
         const otp_hash = await bcrypt.hash(otp, 10)
-        const expiresAt = add(Date.now(), { hours: 1 })
+        const expiresAt = add(Date.now(), { minutes: 10 })
 
-        await prisma.userOTPVerification.create({
+        const otpData = await prisma.userOTPVerification.create({
             data: {
                 userId,
                 otp: otp_hash,
@@ -112,9 +112,19 @@ export async function sendOTPVerificationEmail(userId: string, email: string) {
 
         await transporter.sendMail(mailOptions);
 
-        return { status: 200, message: 'Verification email sent', data: { userId, email } };
+        return {
+            success: true,
+            status: 200,
+            message: 'Verification email sent',
+            data: { userId: otpData.userId, email, otpId: otpData.id }
+        };
     } catch (error) {
         console.error(error);
-        return { status: 500, message: 'Internal Server Error!' };
+        return {
+            success: false,
+            status: 500,
+            message: "Coudln't Send Verification Email!",
+            details: error instanceof Error ? error.message : "Internal Server Error!"
+        };
     }
 }

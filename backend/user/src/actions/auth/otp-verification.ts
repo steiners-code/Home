@@ -1,6 +1,8 @@
 import { sendOTPVerificationEmail } from "../../lib/mailer";
 import { getRefreshToken } from "./authorize-user";
+import { trustDevice } from "./device-trust";
 import { getUserById } from "../user/users";
+import { randomUUID } from "node:crypto";
 import { prisma } from "../../lib/db";
 import { isFuture } from "date-fns";
 import bcrypt from 'bcrypt';
@@ -35,7 +37,7 @@ import bcrypt from 'bcrypt';
 type VerifyOTPReturnType = {
     status: number,
     message: string,
-    data?: {
+    payload?: {
         userId: string,
         firstName: string,
         lastName?: string,
@@ -43,12 +45,22 @@ type VerifyOTPReturnType = {
         auth_time: Date,
     },
     refreshToken?: string
+    newDeviceId?: string
 }
 
-export async function verifyOTP(userId: string, otp: string, ipAddress: string | null, userAgent: string | null): Promise<VerifyOTPReturnType> {
+export async function verifyOTP(
+    data: {
+        userId: string,
+        jti: string,
+    },
+    otp: string,
+    ipAddress: string | null,
+    userAgent: string | null,
+    deviceId: string | null
+): Promise<VerifyOTPReturnType> {
     try {
         const UserOTPRecord = await prisma.userOTPVerification.findFirst({
-            where: { userId },
+            where: { userId: data.userId, id: data.jti },
             orderBy: { createdAt: 'desc' },
             select: {
                 expiresAt: true,
@@ -58,7 +70,7 @@ export async function verifyOTP(userId: string, otp: string, ipAddress: string |
 
         if (!UserOTPRecord) return { status: 400, message: "OTP Record not found" }
         if (!isFuture(UserOTPRecord?.expiresAt)) {
-            await prisma.userOTPVerification.deleteMany({ where: { userId } })
+            await prisma.userOTPVerification.deleteMany({ where: { userId: data.userId } })
             return { status: 400, message: "OTP has expired" }
         }
 
@@ -66,32 +78,37 @@ export async function verifyOTP(userId: string, otp: string, ipAddress: string |
         if (!verified) return { status: 400, message: "Incorrect OTP, Account not verified!" }
 
         const user = await prisma.user.update({
-            where: { id: userId },
+            where: { id: data.userId },
             data: { verified: true },
         });
-        await prisma.userOTPVerification.deleteMany({ where: { userId } })
+        await prisma.userOTPVerification.deleteMany({ where: { userId: data.userId } })
 
         const session = await prisma.session.create({
-            data: { userId, ipAddress, userAgent },
-            select: { id: true }
+            data: { userId: data.userId, ipAddress, userAgent },
+            select: { id: true, createdAt: true }
         });
-        const { refreshToken, success, code, ...tokenRes } = await getRefreshToken(session.id);
-        if (!success || !refreshToken) return tokenRes
+        const { refreshToken, success, ...tokenRes } = await getRefreshToken(session.id);
+        if (!success || !refreshToken) return tokenRes;
+
+        let newDeviceId: string | undefined;
+        if (!deviceId) newDeviceId = randomUUID();
+
+        if (newDeviceId) await trustDevice(data.userId, newDeviceId, ipAddress, userAgent)
 
         return {
             status: 200,
             message: "User account has been verified!",
-            data: {
+            payload: {
                 userId: user.id,
                 firstName: user?.firstName,
                 lastName: user?.lastName ?? undefined,
                 email: user.email,
-                auth_time: new Date(),
+                auth_time: session.createdAt,
             },
             refreshToken,
+            newDeviceId,
         }
     } catch (error) {
-        console.error(error)
         return { status: 500, message: "Internal Server Error!" }
     }
 }
@@ -112,16 +129,41 @@ export async function verifyOTP(userId: string, otp: string, ipAddress: string |
  * - Then, the function calls @sendOTPVerificationEmail function
  */
 
-export async function resendOTPVerificationEmail(userId: string) {
+type resendOTPReturnType = {
+    success: boolean,
+    status: number,
+    message: string,
+    details?: string,
+    data?: {
+        userId: string,
+        email: string,
+        purpose: string,
+        jti: string
+    }
+}
+
+export async function resendOTPVerificationEmail(userId: string, jti: string): Promise<resendOTPReturnType> {
     try {
-        await prisma.userOTPVerification.deleteMany({ where: { userId } })
+        await prisma.userOTPVerification.deleteMany({ where: { userId: userId, id: jti } })
 
         const user = await getUserById(userId);
-        if (!user) return { status: 404, message: "User account does not exist!" }
+        if (!user) return { success: false, status: 404, message: "User account does not exist!" }
 
-        return await sendOTPVerificationEmail(user.id, user.email)
+        const { success, data, ...otpRes } = await sendOTPVerificationEmail(user.id, user.email)
+        if (!success || !data) return { success, ...otpRes }
+
+        return {
+            status: 200,
+            success: true,
+            message: "OTP sent! Check you email.",
+            data: {
+                userId: data.userId,
+                email: data.email,
+                purpose: 'email_verification',
+                jti: data.otpId,
+            }
+        }
     } catch (error) {
-        console.error(error)
-        return { status: 500, message: "Internal Server Error!" }
+        return { success: false, status: 500, message: "Coudn't Resend OTP!", details: error instanceof Error ? error.message : "Internal Server Error!" }
     }
 }

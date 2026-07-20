@@ -45,7 +45,6 @@ async function refreshWithLock(refreshToken: string, forwardedIp: string | null,
     if (existing) return existing;
 
     const url = new URL("/api/v1/auth/refresh", process.env.SERVER_URL).toString();
-    console.log(url);
     const promise = fetch(url, {
         method: "POST",
         headers: {

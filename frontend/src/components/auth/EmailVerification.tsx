@@ -17,14 +17,14 @@ const RESEND_COOLDOWN = 60; // seconds
 interface EmailVerificationProps {
     from: string;
     redirectTo: string;
-    userId: string;
+    token: string;
     email: string;
 }
 
 export default function EmailVerification({
     from,
     redirectTo,
-    userId,
+    token,
     email,
 }: EmailVerificationProps) {
     const router = useRouter();
@@ -33,7 +33,7 @@ export default function EmailVerification({
     const [cooldown, setCooldown] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    if (!userId) {
+    if (!token) {
         router.push("/auth/signin");
     };
 
@@ -55,7 +55,7 @@ export default function EmailVerification({
 
     // Verify OTP mutation
     const { mutate: verify, isPending: isVerifying } = useMutation({
-        mutationFn: () => verifyEmail({ userId, otp }),
+        mutationFn: () => verifyEmail({ token, otp }),
         onSuccess: (result) => {
             if (!result.success) {
                 toast.error(result.message);
@@ -73,7 +73,7 @@ export default function EmailVerification({
 
     // Resend OTP mutation
     const { mutate: resend, isPending: isResending } = useMutation({
-        mutationFn: () => resendOtp({ userId }),
+        mutationFn: () => resendOtp({ token }),
         onSuccess: (result) => {
             if (!result.success) {
                 toast.error(result.message);
@@ -110,9 +110,7 @@ export default function EmailVerification({
 
     return (
         <Card className="w-full max-w-md shadow-lg">
-            {/* ── Header ── */}
             <CardHeader className="flex flex-col items-center gap-3 pb-2">
-                {/* Icon badge */}
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <ShieldCheck className="h-7 w-7" />
                 </div>
@@ -131,7 +129,6 @@ export default function EmailVerification({
                 </div>
             </CardHeader>
 
-            {/* ── OTP Input ── */}
             <CardContent className="flex flex-col items-center gap-6 pt-6">
                 <InputOTP
                     maxLength={OTP_LENGTH}
@@ -150,7 +147,6 @@ export default function EmailVerification({
                     </InputOTPGroup>
                 </InputOTP>
 
-                {/* Verify button — shown when OTP not yet complete */}
                 {otp.length > 0 && otp.length < OTP_LENGTH && (
                     <Button
                         className="w-full"
@@ -161,7 +157,6 @@ export default function EmailVerification({
                     </Button>
                 )}
 
-                {/* Verifying state indicator */}
                 {isVerifying && (
                     <p className="text-sm text-muted-foreground animate-pulse">
                         Verifying your code…
@@ -169,9 +164,7 @@ export default function EmailVerification({
                 )}
             </CardContent>
 
-            {/* ── Footer ── */}
-            <CardFooter className="flex flex-col space-y-6 pt-0">
-                {/* Resend OTP */}
+            <CardFooter className="flex flex-col space-y-6">
                 <div className="flex w-full items-center justify-center gap-1 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4" />
                     <span>Didn&apos;t receive the code?</span>
@@ -189,10 +182,8 @@ export default function EmailVerification({
                     </button>
                 </div>
 
-                {/* Divider */}
                 <Separator />
 
-                {/* Go back */}
                 <button
                     onClick={handleBack}
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

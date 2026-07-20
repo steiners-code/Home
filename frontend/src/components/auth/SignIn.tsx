@@ -2,20 +2,20 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
-import { loginSchema, typeLoginSchema } from "@/lib/schema/auth";
+import { signInSchema, typeSignInSchema } from "@/lib/schema/auth";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { signin } from "@/actions/auth/sign-in";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { login } from "@/actions/auth/log-in";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
     const router = useRouter();
-    const form = useForm<typeLoginSchema>({
-        resolver: zodResolver(loginSchema),
+    const form = useForm<typeSignInSchema>({
+        resolver: zodResolver(signInSchema),
         defaultValues: {
             email: "",
             password: "",
@@ -24,7 +24,7 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
     });
 
     const { mutate, isPending } = useMutation({
-        mutationFn: (data: typeLoginSchema) => login(data),
+        mutationFn: (data: typeSignInSchema) => signin(data),
 
         onSuccess: (result) => {
             if (!result.success) {
@@ -36,31 +36,33 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                     return;
                 }
 
-                toast.error(result.message, { id: "login" });
+                if (result.token) {
+                    const params = new URLSearchParams({
+                        from: "login",
+                        redirectTo: redirectUrl,
+                        token: result.token ?? "",
+                    });
+
+                    router.push(`/auth/verification?${params.toString()}`);
+                    return;
+                }
+
+                toast.error(result.message, { description: result.details, id: "login" });
                 return;
             };
 
             toast.success(result.message ?? "Login successful!", { id: "login" });
 
-            const params = new URLSearchParams({
-                from: "login",
-                redirectTo: redirectUrl,
-                userId: result.data?.userId ?? "",
-                email: result.data?.email ?? ""
-            });
-
-            router.push(`/verification?${params.toString()}`);
+            router.push(redirectUrl ?? "/");
         },
 
         onError: (error: Error) => {
-            console.error("Sign-up error:", error);
             toast.error(error.message ?? "Something went wrong. Please try again.", { id: "signup" });
         },
     });
 
     return (
         <Card className="w-full max-w-lg shadow-lg">
-            {/* ── Header ── */}
             <CardHeader className="flex flex-col items-center gap-1 pb-4">
                 <CardTitle className="flex flex-row items-center gap-3">
                     <span className="text-2xl font-bold tracking-tight">Home</span>
@@ -70,7 +72,6 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                 </CardDescription>
             </CardHeader>
 
-            {/* ── Form ── */}
             <CardContent>
                 <form
                     onSubmit={form.handleSubmit((values) => mutate(values))}
@@ -78,7 +79,6 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                     noValidate
                 >
                     <FieldGroup>
-                        {/* Email */}
                         <Controller
                             name="email"
                             control={form.control}
@@ -100,7 +100,6 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                             )}
                         />
 
-                        {/* Password */}
                         <Controller
                             name="password"
                             control={form.control}
@@ -130,7 +129,6 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                             )}
                         />
 
-                        {/* Submit */}
                         <Button
                             type="submit"
                             className="w-full cursor-pointer!"
@@ -142,7 +140,6 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                 </form>
             </CardContent>
 
-            {/* ── Footer ── */}
             <CardFooter className="flex justify-center">
                 <p className="text-sm text-muted-foreground">
                     Don&apos;t have an account?{" "}

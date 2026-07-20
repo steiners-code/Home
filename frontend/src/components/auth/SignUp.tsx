@@ -52,22 +52,19 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
             const params = new URLSearchParams({
                 from: "signup",
                 redirectTo: redirectUrl,
-                userId: result.data?.userId ?? "",
-                email: result.data?.email ?? ""
+                token: result?.token ?? "",
             });
 
             router.push(`/auth/verification?${params.toString()}`);
         },
 
         onError: (error: Error) => {
-            console.error("Sign-up error:", error);
             toast.error(error.message ?? "Something went wrong. Please try again.", { id: "signup" });
         },
     });
 
     return (
         <Card className="w-full max-w-lg shadow-lg">
-            {/* ── Header ── */}
             <CardHeader className="flex flex-col items-center gap-1 pb-4">
                 <CardTitle className="flex flex-row items-center gap-3">
                     <span className="text-2xl font-bold tracking-tight">Home</span>
@@ -77,7 +74,6 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                 </CardDescription>
             </CardHeader>
 
-            {/* ── Form ── */}
             <CardContent>
                 <form
                     onSubmit={form.handleSubmit((values) => mutate(values))}
@@ -85,9 +81,7 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                     noValidate
                 >
                     <FieldGroup>
-                        {/* Row: First + Last name */}
                         <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 items-start gap-4 sm:gap-2">
-                            {/* First Name */}
                             <Controller
                                 name="firstName"
                                 control={form.control}
@@ -107,7 +101,6 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                                 )}
                             />
 
-                            {/* Last Name */}
                             <Controller
                                 name="lastName"
                                 control={form.control}
@@ -131,7 +124,6 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                             />
                         </FieldGroup>
 
-                        {/* Email */}
                         <Controller
                             name="email"
                             control={form.control}
@@ -152,7 +144,6 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                             )}
                         />
 
-                        {/* Password */}
                         <Controller
                             name="password"
                             control={form.control}
@@ -173,7 +164,6 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                             )}
                         />
 
-                        {/* Confirm Password */}
                         <Controller
                             name="confirmPassword"
                             control={form.control}
@@ -195,10 +185,8 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
                             )}
                         />
 
-                        {/* Divider */}
                         <hr className="border-border" />
 
-                        {/* Privacy Policy — required */}
                         <Controller
                             name="privacyPolicy"
                             control={form.control}

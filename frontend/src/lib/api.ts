@@ -32,15 +32,13 @@ api.interceptors.request.use(async (config) => {
 
     const refreshToken = cookieStore.get('refreshToken')?.value;
     const auth = cookieStore.get('auth')?.value
+    const deviceId = cookieStore.get('deviceId')?.value
 
     if (userIp) config.headers['x-forwarded-for'] = userIp;
     if (userAgent) config.headers['user-agent'] = userAgent;
 
     if (refreshToken) {
-        const existingCookies = config.headers['Cookie'] || '';
-        config.headers['Cookie'] = existingCookies
-            ? `${existingCookies}; refreshToken=${refreshToken}; auth=${auth}`
-            : `refreshToken=${refreshToken}; auth=${auth}`;
+        config.headers['Cookie'] = `deviceId=${deviceId}; refreshToken=${refreshToken}; auth=${auth}`
     }
 
     return config;

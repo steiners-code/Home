@@ -20,7 +20,7 @@ export const authConfig = new Elysia({ name: 'auth-config' })
             name: 'jwt',
             secret: publicKey,
             alg: 'RS256',
-            exp: '7d',
+            exp: '15m',
             schema: t.Object({
                 userId: t.String(),
                 firstName: t.String(),

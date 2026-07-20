@@ -12,17 +12,14 @@ import axios from "axios";
 interface SignUpResponse {
     message: string;
     field?: "firstName" | "password" | "confirmPassword" | "email" | "privacyPolicy";
-    data?: {
-        userId: string;
-        email: string;
-    };
+    token?: string;
 };
 
 interface SignUpActionResult {
     success: boolean;
     message: string;
     field?: SignUpResponse["field"];
-    data?: SignUpResponse["data"];
+    token?: string;
 };
 
 export async function signup(
@@ -33,7 +30,6 @@ export async function signup(
     }
 
     try {
-        await deleteJWT();
         const res = await api.post<SignUpResponse>("/auth/signup", {
             firstName: data.firstName,
             lastName: data.lastName,
@@ -51,12 +47,12 @@ export async function signup(
             }
         }
 
-        const { message, data: responseData } = res.data;
+        const { message, token } = res.data;
 
         return {
             success: true,
             message,
-            data: responseData,
+            token,
         };
 
     } catch (error) {

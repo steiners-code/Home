@@ -17,7 +17,7 @@ export type TypeUserData = {
 
 export type TypeSignInData = {
     email: string,
-    password: string
+    password: string,
 }
 
 export enum Gender {

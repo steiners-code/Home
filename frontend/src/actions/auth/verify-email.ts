@@ -13,20 +13,21 @@ interface OtpActionResult {
 }
 
 export async function verifyEmail({
-    userId,
+    token,
     otp,
 }: {
-    userId: string;
+    token: string;
     otp: string;
 }): Promise<OtpActionResult> {
     try {
         const cookieStore = await cookies();
 
-        const res = await api.post("/auth/verify-account", { userId, otp });
+        const res = await api.post("/auth/verify-account", { token, otp });
+        const data = res.data;
 
         cookieStore.set({
             name: "auth",
-            value: res.data.auth,
+            value: data.auth,
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -36,7 +37,7 @@ export async function verifyEmail({
 
         cookieStore.set({
             name: "refreshToken",
-            value: res.data.refreshToken,
+            value: data.refreshToken,
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -44,9 +45,19 @@ export async function verifyEmail({
             path: "/",
         });
 
+        cookieStore.set({
+            name: "deviceId",
+            value: data.deviceId,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 365 * 24 * 60 * 60,
+            path: "/",
+        });
+
         return {
             success: true,
-            message: res.data?.message ?? "Email verified successfully!",
+            message: data?.message ?? "Email verified successfully!",
         };
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -67,13 +78,14 @@ export async function verifyEmail({
 // -------------------------------- RESEND OTP -----------------------------------
 
 
-export async function resendOtp({ userId }: { userId: string }): Promise<OtpActionResult> {
+export async function resendOtp({ token }: { token: string }): Promise<OtpActionResult> {
     try {
-        const res = await api.post("/auth/resend-otp", { userId });
+        const res = await api.post("/auth/resend-otp", { token });
+        const data = res.data;
 
         return {
             success: true,
-            message: res.data?.message ?? "OTP sent successfully!",
+            message: data?.message ?? "OTP sent successfully!",
         };
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -87,5 +99,18 @@ export async function resendOtp({ userId }: { userId: string }): Promise<OtpActi
             success: false,
             message: "An unexpected error occurred. Please try again.",
         };
+    }
+}
+
+// -------------------------------- OTP INFO -----------------------------------
+
+export async function getEmail(token: string): Promise<string> {
+    try {
+        const res = await api.post("/auth/otp-info", { token })
+        const data = res.data;
+
+        return data.email as string;
+    } catch (error) {
+        return ""
     }
 }

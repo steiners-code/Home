@@ -62,7 +62,6 @@ export async function getRefreshToken(sessionId: string) {
         return {
             success: true,
             status: 200,
-            code: 'SUCCESS',
             message: `Created refresh token for session`,
             refreshToken: rawToken,
         }
@@ -70,7 +69,6 @@ export async function getRefreshToken(sessionId: string) {
         return {
             status: 500,
             success: false,
-            code: 'SERVER_ERROR',
             message: `Server Error: Failed to create refresh token for user ${sessionId}`,
         }
     }
@@ -87,7 +85,7 @@ export async function refreshJWT(token: string, ipAddress: string | null, userAg
                 expiresAt: true,
                 isUsed: true,
                 sessionId: true,
-                session: { select: { ipAddress: true, userAgent: true, userId: true, createdAt: true } },
+                session: { select: { ipAddress: true, userAgent: true, userId: true, createdAt: true, isRevoked: true } },
             },
         });
 
@@ -104,10 +102,18 @@ export async function refreshJWT(token: string, ipAddress: string | null, userAg
                 status: 400,
                 code: 'SIGN_IN',
                 message: "Suspicious Activity: Re-Authorize required.",
-                details: "The refresh token you have provided has already been used. Re-authorize and monitor your connected devices."
+                details: "The refresh token you have provided has already been used. Re-authorize to monitor your connected devices."
             }
 
         const session = existingToken.session;
+
+        if (session.isRevoked)
+            return {
+                status: 400,
+                code: 'SIGN_IN',
+                message: "This session has been revoked.",
+                details: "Please signin again for a new session."
+            }
 
         // Validate user fingerprint or establish the fingerprint only if the fields are present
         // Skip the verification if nothing is present for the UX's sake
