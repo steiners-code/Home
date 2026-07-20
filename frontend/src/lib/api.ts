@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import axios from 'axios';
 import 'dotenv/config';
 
-const SERVER_URL = process.env.SERVER_URL;
+const SERVER_URL = process.env.SERVER_URL!;
 
 /**
  * Server-side Axios instance mapped to the internal API Gateway.
