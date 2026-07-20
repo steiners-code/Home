@@ -3,7 +3,7 @@ name: Deploy the Home
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
