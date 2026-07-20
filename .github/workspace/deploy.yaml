@@ -1,0 +1,52 @@
+name: Deploy the Home
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Run Containerized Stack
+    runs-on: [steiners-local]
+
+      steps:
+        - name: Checkout Repository Source
+          uses: actions/checkout@v4
+
+        - name: Create Frontend Environment File
+          run: |
+            mkdir -p frontend
+            cat <<EOF > frontend/.env
+            JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}"
+            SERVER_URL="${{ secrets.SERVER_URL }}"
+            NEXT_PUBLIC_FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
+            NEXT_PUBLIC_DEFAULT_REDIRECT_URL="${{ secrets.FRONTEND_URL }}"
+            EOF
+
+        - name: Create API Gateway Environment File
+          run: |
+            mkdir -p backend/api-gateway
+            cat <<EOF > backend/api-gateway/.env
+            JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}"
+            EOF
+
+        - name: Create User Environment File
+          run: |
+            mkdir -p backend/user
+            cat <<EOF > backend/user/.env
+            JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}"
+            JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}"
+            DATABASE_URL="${{ secrets.USER_DATABASE_URL }}"
+            FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            GOOGLE_REFRESH_TOKEN="${{ secrets.GOOGLE_REFRESH_TOKEN }}"
+            AUTH_EMAIL="${{ secrets.AUTH_EMAIL }}"
+            EOF
+
+        - name: Standardize and Rebuild Containers
+          run: |
+            docker compose down --remove-orphans
+            docker compose up --build -d
+            docker image prune -f

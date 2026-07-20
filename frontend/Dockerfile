@@ -16,13 +16,12 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# ENV NEXT_PUBLIC_SERVER_URL=http://api-gateway:3000/
-# ENV NEXT_PUBLIC_FRONTEND_URL=https://home.markaz.network/
-# ENV NEXT_PUBLIC_DEFAULT_REDIRECT_URL=https://home.markaz.network/
+ENV NEXT_PUBLIC_FRONTEND_URL=https://home.markaz.network/
+ENV NEXT_PUBLIC_DEFAULT_REDIRECT_URL=https://home.markaz.network/
 
-ENV NEXT_PUBLIC_SERVER_URL=http://localhost:3800/
-ENV NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000/
-ENV NEXT_PUBLIC_DEFAULT_REDIRECT_URL=http://localhost:3000/
+# ENV NEXT_PUBLIC_SERVER_URL=http://localhost:3800/
+# ENV NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000/
+# ENV NEXT_PUBLIC_DEFAULT_REDIRECT_URL=http://localhost:3000/
 
 RUN pnpm run build
 

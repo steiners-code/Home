@@ -114,7 +114,7 @@ export async function auth(request: NextRequest) {
                 name: "auth",
                 value: data.auth,
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: true,
                 sameSite: "lax",
                 maxAge: 15 * 60
             });
@@ -123,7 +123,7 @@ export async function auth(request: NextRequest) {
                 name: "refreshToken",
                 value: data.refreshToken,
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: true,
                 sameSite: "lax",
                 maxAge: 7 * 24 * 60 * 60
             });
