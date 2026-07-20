@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     name: Build & Run Containerized Stack
-    runs-on: [steiners-local]
+    runs-on: [steiners-local, self-hosted]
     steps:
       - name: Checkout Repository Source
         uses: actions/checkout@v4
