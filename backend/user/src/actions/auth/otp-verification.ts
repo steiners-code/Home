@@ -1,5 +1,5 @@
 import { sendOTPVerificationEmail } from "../../lib/mailer";
-import { getRefreshToken } from "./authorize-user";
+import { getRefreshToken } from "./jwt-refresh";
 import { trustDevice } from "./device-trust";
 import { getUserById } from "../user/users";
 import { randomUUID } from "node:crypto";

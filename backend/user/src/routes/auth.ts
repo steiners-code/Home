@@ -1,11 +1,11 @@
 import { resendOTPVerificationEmail, verifyOTP } from "../actions/auth/otp-verification";
-import { refreshJWT } from "../actions/auth/authorize-user";
 import { TypeSignInData, TypeUserData } from "../lib/types";
 import { authConfig, otpConfig } from "../lib/auth-config";
+import { getPayload, getPid } from "../actions/auth/pid";
+import { refreshJWT } from "../actions/auth/jwt-refresh";
 import { signInUser } from "../actions/auth/sign-in";
 import { signUpUser } from "../actions/auth/sign-up";
-import { randomUUID } from "node:crypto";
-import Elysia, { t } from "elysia";
+import Elysia, { status, t } from "elysia";
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
     .use(authConfig)
@@ -115,4 +115,27 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         cookie: t.Cookie({
             refreshToken: t.String({ error: "Missing: Token `refresh` is required." }),
         })
+    })
+
+    .get("/pid", async ({ headers }) => {
+        const userId = headers["userId"];
+
+        const { success, pid, ...res } = await getPid(userId)
+        if (!success || !pid) return status(res.status, { message: res.message, details: res.details });
+
+        return status(res.status, { message: res.message, pid, })
+    }, {
+        headers: t.Object({
+            userId: t.String({ error: "Missing: userId is required!" })
+        })
+    })
+
+    .get("/verify", async ({ query }) => {
+        const pid = query.pid;
+        const userId = query.userId;
+
+        const { success, payload, ...res } = await getPayload(pid, userId);
+        if (!success || !payload) return status(res.status, { message: res.message, details: res.details })
+
+        return status(res.status, { message: res.message, payload })
     })

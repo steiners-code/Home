@@ -1,9 +1,8 @@
 import { sendOTPVerificationEmail } from "../../lib/mailer";
-import { TypeSignInData } from "../../lib/types";
+import { assessLoginRisk } from "./device-trust";
+import { getRefreshToken } from "./jwt-refresh";
 import { prisma } from "../../lib/db";
 import bcrypt from "bcrypt";
-import { assessLoginRisk } from "./device-trust";
-import { getRefreshToken } from "./authorize-user";
 
 /**
  * @signInUser function validates user credentails and returns a signed JWT
@@ -111,7 +110,7 @@ export async function signInUser(email: string, password: string, deviceId: stri
             success: true,
             status: 200,
             code: "TRUSTED",
-            message: "A verification code has been sent to your email!",
+            message: "Account Successfully Signed In!",
             payload: {
                 userId: user.id,
                 email: user.email,
