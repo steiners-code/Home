@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 export async function connectApp() {
     try {
-        const res = await api.get("/auth/pid");
+        const res = await api.get("/user/pid");
         const data = res.data as { pid: string, message: string };
 
         return { success: true, message: data.message, pid: data.pid }

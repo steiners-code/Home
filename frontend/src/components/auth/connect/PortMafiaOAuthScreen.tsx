@@ -38,7 +38,7 @@ const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl }: ConsentScreenProps) =
         onSuccess: (res) => {
             if (!res.success || !res.pid) toast.error(res.message, { description: res?.details });
 
-            const target = new URL(callbackUrl);
+            const target = new URL(decodeURIComponent(callbackUrl));
             target.searchParams.set("pid", res?.pid || "");
             target.searchParams.set("redirectTo", redirectTo || "");
 

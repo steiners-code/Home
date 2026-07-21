@@ -1,11 +1,11 @@
 import { resendOTPVerificationEmail, verifyOTP } from "../actions/auth/otp-verification";
 import { TypeSignInData, TypeUserData } from "../lib/types";
 import { authConfig, otpConfig } from "../lib/auth-config";
-import { getPayload, getPid } from "../actions/auth/pid";
 import { refreshJWT } from "../actions/auth/jwt-refresh";
 import { signInUser } from "../actions/auth/sign-in";
 import { signUpUser } from "../actions/auth/sign-up";
-import Elysia, { status, t } from "elysia";
+import { getPayload } from "../actions/auth/pid";
+import Elysia, { t } from "elysia";
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
     .use(authConfig)
@@ -117,20 +117,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         })
     })
 
-    .get("/pid", async ({ headers }) => {
-        const userId = headers["userId"];
-
-        const { success, pid, ...res } = await getPid(userId)
-        if (!success || !pid) return status(res.status, { message: res.message, details: res.details });
-
-        return status(res.status, { message: res.message, pid, })
-    }, {
-        headers: t.Object({
-            userId: t.String({ error: "Missing: userId is required!" })
-        })
-    })
-
-    .get("/verify", async ({ query }) => {
+    .get("/verify", async ({ query, status }) => {
         const pid = query.pid;
         const userId = query.userId;
 
