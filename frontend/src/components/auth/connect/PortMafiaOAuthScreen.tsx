@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const permissions = [
     {
@@ -31,12 +32,16 @@ type ConsentScreenProps = {
 }
 
 const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl }: ConsentScreenProps) => {
+    const [redirecting, setRedirecting] = useState(false)
     const router = useRouter();
 
     const { mutate: connectMutation, isPending: isAuthorizing } = useMutation({
         mutationFn: connectApp,
         onSuccess: (res) => {
             if (!res.success || !res.pid) toast.error(res.message, { description: res?.details });
+
+            toast.success(res.message)
+            setRedirecting(true);
 
             const target = new URL(decodeURIComponent(callbackUrl));
             target.searchParams.set("pid", res?.pid || "");
@@ -99,12 +104,12 @@ const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl }: ConsentScreenProps) =
                             variant="outline"
                             className="flex-1"
                             onClick={() => router.back()}
-                            disabled={isAuthorizing}
+                            disabled={isAuthorizing || redirecting}
                         >
                             Cancel
                         </Button>
-                        <Button className="flex-1" onClick={() => connectMutation()} disabled={isAuthorizing}>
-                            {isAuthorizing ? "Authorizing..." : "Authorize"}
+                        <Button className="flex-1" onClick={() => connectMutation()} disabled={isAuthorizing || redirecting}>
+                            {isAuthorizing || redirecting ? "Authorizing..." : "Authorize"}
                         </Button>
                     </div>
                     <p className="text-center text-xs text-muted-foreground">

@@ -3,6 +3,8 @@ import { addMinutes, isFuture } from "date-fns";
 
 export async function getPid(userId: string) {
     try {
+        await prisma.tempAuth.deleteMany({ where: { userId } });
+
         const expiresAt = addMinutes(new Date(), 15);
 
         const data = await prisma.tempAuth.create({
@@ -40,7 +42,7 @@ export async function getPayload(pid?: string, userId?: string) {
             })
 
             if (!data) return { status: 400, success: false, message: "PID is Invalid or Does NOT exist" }
-            if (isFuture(data?.expiresAt)) return { status: 400, success: false, message: "PID is invalid or expired." }
+            if (!isFuture(data?.expiresAt)) return { status: 400, success: false, message: "PID is invalid or expired." }
 
             await prisma.tempAuth.delete({
                 where: { pid }

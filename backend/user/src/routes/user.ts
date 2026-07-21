@@ -34,7 +34,7 @@ export const userRoutes = new Elysia()
     // })
 
     .get("/pid", async ({ headers, status }) => {
-        const userId = headers["X-User-Id"];
+        const userId = headers["x-user-id"];
 
         const { success, pid, ...res } = await getPid(userId)
         if (!success || !pid) return status(res.status, { message: res.message, details: res.details });
@@ -42,6 +42,6 @@ export const userRoutes = new Elysia()
         return status(res.status, { message: res.message, pid, })
     }, {
         headers: t.Object({
-            "X-User-Id": t.String({ error: "Missing: userId is required!" })
+            'x-user-id': t.String({ error: "Unathorized: Missing API Gateway User ID!" })
         })
     })
