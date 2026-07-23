@@ -29,9 +29,10 @@ const permissions = [
 type ConsentScreenProps = {
     redirectTo: string
     callbackUrl: string
+    state: string
 }
 
-const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl }: ConsentScreenProps) => {
+const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl, state }: ConsentScreenProps) => {
     const [redirecting, setRedirecting] = useState(false)
     const router = useRouter();
 
@@ -46,6 +47,7 @@ const PortMafiaOAuthScreen = ({ redirectTo, callbackUrl }: ConsentScreenProps) =
             const target = new URL(decodeURIComponent(callbackUrl));
             target.searchParams.set("pid", res?.pid || "");
             target.searchParams.set("redirectTo", redirectTo || "");
+            target.searchParams.set("state", state || "");
 
             router.push(target.toString());
         },
