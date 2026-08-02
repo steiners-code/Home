@@ -3,7 +3,7 @@ import Link from "next/link"
 const HomePage = () => {
   return (
     <div className="space-y-6">
-      <h1 className="text-4xl font-bold text-white">Home Headquarters</h1>
+      <h1 className="text-4xl font-bold text-white">Home</h1>
       <p className="text-lg text-zinc-400">
         Central multi-agent system and organizational architecture.
       </p>

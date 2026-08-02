@@ -26,6 +26,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Home — Headquarters (HQ)",
   description: "Home sweet home — Home of the underworlds",
+  verification: {
+    google: 'Hafg67vRuHogGCAYuu5HskRHDMYT5b0mwfINoyH-Hlk',
+  },
 };
 
 export default function RootLayout({
