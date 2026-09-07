@@ -2,7 +2,6 @@
 
 import { typeSignInSchema } from "@/lib/schema/auth";
 import { cookies } from "next/headers";
-import { deleteJWT } from "@/lib/auth";
 import { api } from "@/lib/api";
 import axios from "axios";
 
@@ -27,7 +26,7 @@ interface SignInActionResult {
 };
 
 export async function signin(
-    data: typeSignInSchema,
+    data: typeSignInSchema
 ): Promise<SignInActionResult> {
     const cookieStore = await cookies()
 

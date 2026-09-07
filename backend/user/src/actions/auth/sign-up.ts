@@ -74,7 +74,7 @@ let cachedFreeTierId: string | null = null;
  * - A verification email is sent to user's email address
 */
 
-export async function signUpUser({ firstName, lastName, email, password, privacyPolicy, newsletter }: TypeUserData) {
+export async function signUpUser({ firstName, lastName, email, password, privacyPolicy, newsletter, timeZone }: TypeUserData) {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
 
@@ -113,6 +113,7 @@ export async function signUpUser({ firstName, lastName, email, password, privacy
                     email,
                     password_hash,
                     newsletter,
+                    timeZone,
                     // tierId: tierId
                 },
             });

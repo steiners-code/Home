@@ -23,7 +23,7 @@ interface SignUpActionResult {
 };
 
 export async function signup(
-    data: typeSignUpSchema,
+    data: typeSignUpSchema, timeZone: string,
 ): Promise<SignUpActionResult> {
     if (data.password !== data.confirmPassword) {
         return { success: false, message: "Passwords do not match!", field: "confirmPassword" };
@@ -37,6 +37,7 @@ export async function signup(
             password: data.password,
             privacyPolicy: data.privacyPolicy,
             newsletter: data.newsletterOptIn,
+            timeZone,
         });
 
         if (res.status !== 200) {

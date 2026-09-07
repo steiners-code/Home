@@ -31,7 +31,7 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
     });
 
     const { mutate, isPending } = useMutation({
-        mutationFn: (data: typeSignUpSchema) => signup(data),
+        mutationFn: ({ data, timeZone }: { data: typeSignUpSchema, timeZone: string }) => signup(data, timeZone),
 
         onSuccess: (result) => {
             if (!result.success) {
@@ -76,7 +76,10 @@ export default function SignUp({ redirectUrl }: { redirectUrl: string }) {
 
             <CardContent>
                 <form
-                    onSubmit={form.handleSubmit((values) => mutate(values))}
+                    onSubmit={form.handleSubmit((values) => {
+                        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                        mutate({ data: values, timeZone })
+                    })}
                     className="space-y-5"
                     noValidate
                 >
