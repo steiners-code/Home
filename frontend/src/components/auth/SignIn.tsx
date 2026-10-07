@@ -109,12 +109,12 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
                                         <FieldLabel htmlFor="login-password">
                                             Password <span className="text-destructive">*</span>
                                         </FieldLabel>
-                                        <a
-                                            href="/forgot-password"
+                                        <Link
+                                            href="/auth/forgot-password"
                                             className="text-xs text-muted-foreground underline underline-offset-2 hover:text-primary"
                                         >
                                             Forgot password?
-                                        </a>
+                                        </Link>
                                     </div>
                                     <Input
                                         {...field}
@@ -143,12 +143,12 @@ const SignIn = ({ redirectUrl }: { redirectUrl: string }) => {
             <CardFooter className="flex justify-center">
                 <p className="text-sm text-muted-foreground">
                     Don&apos;t have an account?{" "}
-                    <a
+                    <Link
                         href="/auth/signup"
                         className="font-medium underline underline-offset-2 hover:text-primary"
                     >
                         Sign up
-                    </a>
+                    </Link>
                 </p>
             </CardFooter>
         </Card>
