@@ -3,7 +3,7 @@ import { auth } from "./lib/auth";
 
 // -------------------------------- HELPER FUNCTION -----------------------------------
 
-const publicRoutes = ["/", "/auth/signin", "/auth/signup", "/auth/verification", "/error"];
+const publicRoutes = ["/", "/auth/signin", "/auth/signup", "/auth/forgot-password", "/auth/verification", "/error"];
 
 // -------------------------------- PROXY (MIDDLEWARE) -----------------------------------
 
