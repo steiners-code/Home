@@ -1,4 +1,4 @@
-// import { sendOTPVerificationEmail } from "../../lib/mailer";
+import { sendOTPVerificationEmail } from "../../lib/mailer";
 import { assessLoginRisk } from "./device-trust";
 import { getRefreshToken } from "./jwt-refresh";
 import { prisma } from "../../lib/db";
@@ -75,12 +75,31 @@ export async function signInUser(email: string, password: string, deviceId: stri
                 email: true,
                 password_hash: true,
                 timeZone: true,
+                verified: true,
             },
         });
         if (!user) return { success: false, status: 400, message: "Account don't exists! Try to Sign-up", field: "email", code: "ERROR" }
 
         const verified = bcrypt.compare(password, user?.password_hash)
         if (!verified) return { success: false, status: 401, message: "Invalid email or password", field: "password", code: "ERROR" }
+
+        if (!user.verified) {
+            const { success, data, ...res } = await sendOTPVerificationEmail(user?.id, email)
+            if (!success || !data) return { success: false, code: "ERROR", ...res }
+
+            return {
+                success: true,
+                status: 200,
+                message: "A verification code has been sent to your email!",
+                code,
+                otpPayload: {
+                    userId: data.userId,
+                    email: data.email,
+                    jti: data.otpId,
+                    purpose: 'email_verification'
+                },
+            }
+        }
 
         if (deviceId) code = await assessLoginRisk(user.id, deviceId);
         // if (code !== "TRUSTED") {
